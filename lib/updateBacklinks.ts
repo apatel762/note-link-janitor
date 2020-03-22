@@ -7,6 +7,7 @@ import processor from "./processor";
 
 export interface BacklinkEntry {
   sourceTitle: string;
+  targetURL: string;
   context: MDAST.BlockContent[];
 }
 
@@ -44,7 +45,7 @@ export default function updateBacklinks(
           type: "paragraph",
           children: [
             ({
-              type: "wikiLink",
+              type: "link",
               value: entry.sourceTitle,
               data: { alias: entry.sourceTitle }
             } as unknown) as MDAST.PhrasingContent
@@ -76,7 +77,7 @@ export default function updateBacklinks(
     backlinksString = `## Backlinks\n${backlinks
       .map(
         entry =>
-          `* [[${entry.sourceTitle}]]\n${entry.context
+          `* [${entry.sourceTitle}](${entry.targetURL})\n${entry.context
             .map(
               block => `\t* ${processor.stringify(block).replace(/\n.+/, "")}\n`
             )

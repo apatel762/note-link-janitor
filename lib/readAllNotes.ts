@@ -3,6 +3,7 @@ import * as MDAST from "mdast";
 import * as path from "path";
 import * as remark from "remark";
 import * as find from "unist-util-find";
+import * as memoizee from "memoizee";
 
 import getNoteLinks, { NoteLinkEntry } from "./getNoteLinks";
 import processor from "./processor";
@@ -14,12 +15,15 @@ const headingFinder = processor().use(() => tree =>
 );
 interface Note {
   title: string;
+  url: string;
   links: NoteLinkEntry[];
   noteContents: string;
   parseTree: MDAST.Root;
 }
 
-async function readNote(notePath: string): Promise<Note> {
+export const getNoteTitle = memoizee(async function(
+  notePath: string
+): Promise<{ title: string; noteContents: string; parseTree: MDAST.Root }> {
   const noteContents = await fs.promises.readFile(notePath, {
     encoding: "utf-8"
   });
@@ -36,7 +40,22 @@ async function readNote(notePath: string): Promise<Note> {
     })
     .trimEnd();
 
-  return { title, links: getNoteLinks(parseTree), parseTree, noteContents };
+  return { parseTree, title, noteContents };
+});
+
+export async function readNote(
+  notePath: string,
+  folder: string
+): Promise<Note> {
+  const { title, parseTree, noteContents } = await getNoteTitle(notePath);
+  const links = await getNoteLinks(parseTree, folder);
+  return {
+    title,
+    url: `./${path.parse(notePath).base}`,
+    links,
+    parseTree,
+    noteContents
+  };
 }
 
 export default async function readAllNotes(
@@ -46,11 +65,21 @@ export default async function readAllNotes(
     withFileTypes: true
   });
   const notePaths = noteDirectoryEntries
-    .filter(entry => entry.isFile() && !entry.name.startsWith("."))
+    .filter(
+      entry =>
+        entry.isFile() &&
+        !entry.name.startsWith(".") &&
+        !entry.name.includes("http") &&
+        entry.name.endsWith(".md")
+    )
     .map(entry => path.join(noteFolderPath, entry.name));
 
   const noteEntries = await Promise.all(
-    notePaths.map(async notePath => [notePath, await readNote(notePath)])
+    notePaths.map(async notePath => [
+      notePath,
+      await readNote(notePath, noteFolderPath)
+    ])
   );
+
   return Object.fromEntries(noteEntries);
 }

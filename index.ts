@@ -16,6 +16,7 @@ import updateBacklinks from "./lib/updateBacklinks";
   }
 
   const notes = await readAllNotes(baseNotePath);
+  console.log(notes);
   const linkMap = createLinkMap(Object.values(notes));
 
   // Sort by PageRank
@@ -38,10 +39,19 @@ import updateBacklinks from "./lib/updateBacklinks";
         notes[notePath].noteContents,
         backlinks
           ? [...backlinks.keys()]
-              .map(sourceTitle => ({
-                sourceTitle,
-                context: backlinks.get(sourceTitle)!
-              }))
+              .map(sourceTitle => {
+                const backlink = backlinks.get(sourceTitle);
+
+                if (!backlink) {
+                  throw new Error("nope");
+                }
+
+                return {
+                  sourceTitle,
+                  targetURL: backlink.url,
+                  context: backlink.context
+                };
+              })
               .sort(
                 (
                   { sourceTitle: sourceTitleA },

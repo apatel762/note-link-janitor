@@ -1,9 +1,9 @@
 import * as MDAST from "mdast";
+import * as path from "path";
 import * as UNIST from "unist";
 import * as visitParents from "unist-util-visit-parents";
-
 import getBacklinksBlock from "./getBacklinksBlock";
-import { WikiLinkNode } from "./WikiLinkNode";
+import { readNote, getNoteTitle } from "./readAllNotes";
 
 const blockTypes = [
   "paragraph",
@@ -25,8 +25,11 @@ export interface NoteLinkEntry {
   context: MDAST.BlockContent | null;
 }
 
-export default function getNoteLinks(tree: MDAST.Root): NoteLinkEntry[] {
-  // Strip out the backlinks section
+export default async function getNoteLinks(
+  tree: MDAST.Root,
+  folder: string
+): Promise<NoteLinkEntry[]> {
+  // Strip out the back links section
   const backlinksInfo = getBacklinksBlock(tree);
   let searchedChildren: UNIST.Node[];
   if (backlinksInfo.isPresent) {
@@ -45,21 +48,27 @@ export default function getNoteLinks(tree: MDAST.Root): NoteLinkEntry[] {
   } else {
     searchedChildren = tree.children;
   }
-  const links: NoteLinkEntry[] = [];
-  visitParents<WikiLinkNode>(
+  const links: Promise<NoteLinkEntry>[] = [];
+  visitParents<MDAST.Link>(
     { ...tree, children: searchedChildren } as MDAST.Parent,
-    "wikiLink",
-    (node: WikiLinkNode, ancestors: MDAST.Content[]) => {
+    "link",
+    (node: MDAST.Link, ancestors: MDAST.Content[]) => {
       const closestBlockLevelAncestor = ancestors.reduceRight<MDAST.BlockContent | null>(
         (result, needle) => result ?? (isBlockContent(needle) ? needle : null),
         null
       );
-      links.push({
-        targetTitle: ((node as unknown) as WikiLinkNode).data.alias,
-        context: closestBlockLevelAncestor
-      });
+      if (node.url.endsWith(".md")) {
+        // gross
+        links.push(
+          getNoteTitle(path.join(folder, node.url)).then(
+            ({ title: targetTitle }) => {
+              return { targetTitle, context: closestBlockLevelAncestor };
+            }
+          )
+        );
+      }
       return true;
     }
   );
-  return links;
+  return Promise.all(links);
 }
