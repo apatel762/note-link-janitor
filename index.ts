@@ -16,7 +16,6 @@ import updateBacklinks from "./lib/updateBacklinks";
   }
 
   const notes = await readAllNotes(baseNotePath);
-  console.log(notes);
   const linkMap = createLinkMap(Object.values(notes));
 
   // Sort by PageRank
