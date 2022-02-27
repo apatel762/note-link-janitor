@@ -21,7 +21,7 @@ interface Note {
   parseTree: MDAST.Root;
 }
 
-export const getNoteTitle = memoizee(async function(
+export const getNoteTitle = memoizee(async function (
   notePath: string
 ): Promise<{ title: string; noteContents: string; parseTree: MDAST.Root }> {
   const noteContents = await fs.promises.readFile(notePath, {
@@ -67,10 +67,10 @@ export default async function readAllNotes(
   const notePaths = noteDirectoryEntries
     .filter(
       entry =>
-        entry.isFile() &&
-        !entry.name.startsWith(".") &&
-        !entry.name.includes("http") &&
-        entry.name.endsWith(".md")
+        entry.isFile()
+        && entry.name.endsWith(".md")
+        && !entry.name.startsWith(".")
+        && !entry.name.includes("http")
     )
     .map(entry => path.join(noteFolderPath, entry.name));
 

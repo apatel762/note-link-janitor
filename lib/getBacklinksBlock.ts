@@ -11,14 +11,14 @@ export default function getBacklinksBlock(
   tree: MDAST.Root
 ):
   | {
-      isPresent: true;
-      start: UNIST.Node;
-      until: UNIST.Node | null;
-    }
+    isPresent: true;
+    start: UNIST.Node;
+    until: UNIST.Node | null;
+  }
   | {
-      isPresent: false;
-      insertionPoint: UNIST.Node | null;
-    } {
+    isPresent: false;
+    insertionPoint: UNIST.Node | null;
+  } {
   const existingBacklinksNodeIndex = tree.children.findIndex(
     (node: UNIST.Node): node is MDAST.Heading =>
       is(node, {
@@ -28,7 +28,7 @@ export default function getBacklinksBlock(
   );
   if (existingBacklinksNodeIndex === -1) {
     const insertionPoint =
-      tree.children.find(node => is(node, isClosingMatterNode)) || null;
+      tree.children.slice().reverse().find(node => is(node, isClosingMatterNode)) || null;
     return {
       isPresent: false,
       insertionPoint

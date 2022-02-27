@@ -28,6 +28,8 @@ The backlinks section will be initially inserted at the end of the file. If ther
 
 This is FYI-style open source. I'm sharing it for interested parties, but without any stewardship commitment. Assume that my default response to issues and pull requests will by to ignore or close them without comment. It's modified from [Andy Matuschak's code](https://github.com/andymatuschak/note-link-janitor), which does the same but with [[Wiki Style Links]].
 
+If you store your notes in a Git repository and would like to run note-link-janitor on every push, see this [Github Actions Workflow](https://gist.github.com/rajesh-s/749c99ef9e7c884828a1acda698e477b) from [Rajesh Shashi Kumar](https://github.com/rajesh-s).
+
 ## Building a local copy
 
 ```
